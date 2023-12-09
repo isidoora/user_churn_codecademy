@@ -1,4 +1,23 @@
--- create table for dates
+-- getting familiar with data
+SELECT *
+FROM subscriptions
+LIMIT 10;
+
+-- all different segments
+SELECT DISTINCT segment
+FROM subscriptions;
+-- distribution of segments
+SELECT segment, COUNT(*) AS count
+FROM subscriptions
+GROUP BY 1;
+
+-- period of available data
+SELECT 
+  MIN(subscription_start) AS first_date,
+  MAX(subscription_end) AS last_date
+FROM subscriptions;
+
+-- create a table for dates
 WITH months AS(
   SELECT
     '2017-01-01' AS first_day,
@@ -12,7 +31,7 @@ WITH months AS(
     '2017-03-01' AS first_day,
     '2017-03-31' AS last_day
 ),
--- merge dates table with subscriptions table
+-- merge the dates table with the subscriptions table
 cross_join AS(
   SELECT *
   FROM subscriptions
@@ -47,7 +66,7 @@ status AS(
     END AS is_canceled_30
   FROM cross_join
 ),
--- total_number of active/canceled subscriptions monthly
+-- total number of active/cancelled subscriptions monthly
 status_aggregate AS(
   SELECT 
     month,
@@ -57,9 +76,15 @@ status_aggregate AS(
   FROM status
   GROUP BY month
 )
--- calculating user chrun rate
+-- calculating segmented user churn rate
 SELECT
  STRFTIME('%m', month) AS month,
  ROUND(1.0 * sum_canceled_87 / sum_active_87, 2) AS chrune_87,
  ROUND(1.0 * sum_canceled_30 / sum_active_30, 2) AS chrune_30
+FROM status_aggregate;
+
+-- calculating overall churn rate
+SELECT 
+  STRFTIME('%m', month) AS month,
+  ROUND(1.0 * (sum_canceled_87 + sum_canceled_30) / (sum_active_87 + sum_active_30), 2) AS overall_churn
 FROM status_aggregate;
